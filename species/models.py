@@ -6,7 +6,7 @@ class Specie(models.Model):
 
     title = models.CharField(max_length=100)
     description = models.TextField("Описание")
-    participants_count = models.PositiveIntegerField(
+    participants_left = models.PositiveIntegerField(
         "Оставшееся число участников", default=20
     )
 

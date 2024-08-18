@@ -12,4 +12,5 @@ class UserAdmin(BaseUserAdmin):
             "Личные данные",
             {"fields": ("last_name", "first_name", "middle_name", "date_joined")},
         ),
+        (None, {"fields": ("spacie",)}),
     )
