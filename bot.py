@@ -11,7 +11,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tg_bot.settings")
 django.setup()
 
 # NOTE: мы не можем использовать модули до `django.setup()`
-import accounts.router # noqa
+import accounts.router  # noqa
+import species.router  # noqa
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
@@ -22,6 +23,7 @@ def main() -> None:
     application = Application.builder().token(os.getenv("TG_BOT_TOKEN")).build()
 
     application.add_handlers(accounts.router.HANDLERS)
+    application.add_handlers(species.router.HANDLERS)
 
     application.run_polling()
 

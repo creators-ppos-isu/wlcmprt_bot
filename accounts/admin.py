@@ -10,6 +10,6 @@ class UserAdmin(BaseUserAdmin):
         ("Авторизация", {"fields": ("username", "password")}),
         (
             "Личные данные",
-            {"fields": ("first_name",)},
+            {"fields": ("last_name", "first_name", "middle_name", "date_joined")},
         ),
     )
