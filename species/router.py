@@ -1,11 +1,13 @@
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from django.conf import settings
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import ParseMode
 from telegram.ext import (
-    ContextTypes,
     CallbackQueryHandler,
+    ContextTypes,
     MessageHandler,
     filters,
 )
-from telegram.constants import ParseMode
+
 from accounts.models import User
 from species.models import Specie
 
@@ -42,18 +44,19 @@ async def specie_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _, specie_pk = query.data.split(":")
 
     specie: Specie = await Specie.objects.aget(pk=specie_pk)
-    await query.edit_message_text(
-        text=f"<b>{specie.title}</b>\n\n{specie.description}\nСвободных мест: {specie.participants_left}",
+    await update.effective_message.reply_photo(
+        photo=settings.BASE_DIR / "media" / specie.photo.name,
+        caption=f"<b>{specie.title}</b>\n\n{specie.description}\nСвободных мест: {specie.participants_left}",
+        parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup.from_column(
             [
                 InlineKeyboardButton(
                     f"{'🔒 ' if specie.participants_left == 0 else '' }Выбрать",
                     callback_data=f"choose_specie:{specie_pk}",
                 ),
-                InlineKeyboardButton("Назад", callback_data="back:specie_list"),
+                # InlineKeyboardButton("Назад", callback_data="back:specie_list"),
             ],
         ),
-        parse_mode=ParseMode.HTML,
     )
 
 
@@ -78,14 +81,14 @@ async def choose_specie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await user.asave()
     await specie.asave()
 
-    await query.answer()
-    await query.edit_message_text(f"Ты выбрал расу: {specie.title}")
+    await query.answer(f"Ты выбрал расу: {specie.title}", show_alert=True)
+    await query.edit_message_reply_markup()
     await update.effective_message.reply_html("Поздравляю с выбором расы!")
 
 
 HANDLERS = [
     MessageHandler(filters.Text(["Выбрать расу"]), species_list),
-    CallbackQueryHandler(species_list, pattern="^back:specie_list"),
+    # CallbackQueryHandler(species_list, pattern="^back:specie_list"),
     CallbackQueryHandler(specie_detail, pattern="^specie_detail:"),
     CallbackQueryHandler(choose_specie, pattern="^choose_specie:"),
 ]

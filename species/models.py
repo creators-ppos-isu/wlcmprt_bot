@@ -9,6 +9,7 @@ class Specie(models.Model):
     participants_left = models.PositiveIntegerField(
         "Оставшееся число участников", default=20
     )
+    photo = models.ImageField("Фото", upload_to="species/", null=True, blank=True)
 
     class Meta:
         verbose_name = "Раса"
