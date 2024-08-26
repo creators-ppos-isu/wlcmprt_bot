@@ -41,10 +41,15 @@ POSTER_TEXT = """
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=settings.BASE_DIR / "static/" / "images/" / "poster.jpg",
-        reply_markup=CHOOSE_SPECIE_REPLY_MARKUP,
-    )
+    try:
+        await update.message.reply_photo(context.bot_data['poster'], reply_markup=CHOOSE_SPECIE_REPLY_MARKUP)
+    except Exception:
+        m = await update.message.reply_photo(
+            photo=settings.BASE_DIR / "static/" / "images/" / "poster.jpg",
+            reply_markup=CHOOSE_SPECIE_REPLY_MARKUP,
+        )
+        context.bot_data['poster'] = m.photo[-1].file_id
+
     await update.message.reply_html(text=POSTER_TEXT)
 
     if not await User.objects.filter(pk=update.effective_user.id).aexists():
