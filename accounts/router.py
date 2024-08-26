@@ -10,7 +10,7 @@ from accounts.models import User
 
 FULL_NAME = 0
 CHOOSE_SPECIE_REPLY_MARKUP = ReplyKeyboardMarkup.from_button(
-    KeyboardButton("Выбрать расу"), resize_keyboard=True
+    KeyboardButton("Выбрать антилокацию"), resize_keyboard=True
 )
 
 

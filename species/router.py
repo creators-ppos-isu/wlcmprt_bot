@@ -1,5 +1,5 @@
 from django.conf import settings
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto
 from telegram.constants import ParseMode
 from telegram.ext import (
     CallbackQueryHandler,
@@ -9,11 +9,11 @@ from telegram.ext import (
 )
 
 from accounts.models import User
-from species.models import Specie
+from species.models import Specie, SpeciePhoto
 
 
 async def species_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Отправляем список рас пользователю"""
+    """Отправляем список антилокаций пользователю"""
 
     buttons = []
     async for specie in Specie.objects.all():
@@ -30,13 +30,13 @@ async def species_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
         func = query.edit_message_text
 
     await func(
-        text="Выбери свою расу",
+        text="Выбери свою антилокацию",
         reply_markup=InlineKeyboardMarkup.from_column(buttons),
     )
 
 
 async def specie_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Получение информации о расе"""
+    """Получение информации о антилокации"""
 
     query = update.callback_query
     await query.answer()
@@ -44,9 +44,19 @@ async def specie_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _, specie_pk = query.data.split(":")
 
     specie: Specie = await Specie.objects.aget(pk=specie_pk)
-    await update.effective_message.reply_photo(
-        photo=settings.BASE_DIR / "media" / specie.photo.name,
-        caption=f"<b>{specie.title}</b>\n\n{specie.description}\nСвободных мест: {specie.participants_left}",
+    
+    photos = []
+    async for photo in SpeciePhoto.objects.filter(specie=specie_pk):
+        photos.append(InputMediaPhoto(photo.photo))
+
+    await update.effective_message.reply_media_group(
+        media=photos,
+        caption=f"<b>{specie.title}</b>\n\n{specie.description}",
+        parse_mode=ParseMode.HTML,
+    )
+
+    await update.effective_message.reply_text(
+        text=f"Свободных мест: {specie.participants_left}",
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup.from_column(
             [
@@ -61,7 +71,7 @@ async def specie_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def choose_specie(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Выбор расы"""
+    """Выбор антилокации"""
 
     query = update.callback_query
 
@@ -74,20 +84,20 @@ async def choose_specie(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await query.answer("Нет свободных мест!", show_alert=True)
 
     if user.spacie_id is not None:
-        return await query.answer("Ты уже выбрал свою расу!", show_alert=True)
+        return await query.answer("Ты уже выбрал свою антилокацию!", show_alert=True)
 
     user.spacie = specie
     specie.participants_left -= 1
     await user.asave()
     await specie.asave()
 
-    await query.answer(f"Ты выбрал расу: {specie.title}", show_alert=True)
+    await query.answer(f"Ты выбрал антилокацию: {specie.title}", show_alert=True)
     await query.edit_message_reply_markup()
     await update.effective_message.reply_html("Поздравляю с выбором расы!")
 
 
 HANDLERS = [
-    MessageHandler(filters.Text(["Выбрать расу"]), species_list),
+    MessageHandler(filters.Text(["Выбрать антилокацию"]), species_list),
     # CallbackQueryHandler(species_list, pattern="^back:specie_list"),
     CallbackQueryHandler(specie_detail, pattern="^specie_detail:"),
     CallbackQueryHandler(choose_specie, pattern="^choose_specie:"),
