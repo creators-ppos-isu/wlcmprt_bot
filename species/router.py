@@ -44,10 +44,14 @@ async def specie_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _, specie_pk = query.data.split(":")
 
     specie: Specie = await Specie.objects.aget(pk=specie_pk)
+
+    # async for media in SpeciePhoto.objects.filter(specie=specie_pk):
+    #     if file_id := context.bot_data[media.photo.name]: 
+    #         photo = file_id
+    #     else:
+    #         photo = await context.bot.get_file(media.photo)
     
-    photos = []
-    async for photo in SpeciePhoto.objects.filter(specie=specie_pk):
-        photos.append(InputMediaPhoto(photo.photo))
+    photos = [InputMediaPhoto(media=media.photo) async for media in SpeciePhoto.objects.filter(specie=specie_pk)]
 
     await update.effective_message.reply_media_group(
         media=photos,
@@ -70,6 +74,17 @@ async def specie_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+CHOOSE_SPECIE_SUCCESS= """
+Поздравляем с выбором антилокации - {specie}!
+
+Наш рейв состоится в самом центре Асперы, победит лишь один - а ты готов к тому, чтобы доказать, что именно твоя антилокация лучшая?
+
+Встречаемся
+📅5 сентября
+🕑21:00
+🏠Гриль-бар “The Rocks”
+"""
+
 async def choose_specie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Выбор антилокации"""
 
@@ -91,9 +106,9 @@ async def choose_specie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await user.asave()
     await specie.asave()
 
-    await query.answer(f"Ты выбрал антилокацию: {specie.title}", show_alert=True)
+    await query.answer()
     await query.edit_message_reply_markup()
-    await update.effective_message.reply_html("Поздравляю с выбором расы!")
+    await update.effective_message.reply_html(CHOOSE_SPECIE_SUCCESS.format(specie=specie.title))
 
 
 HANDLERS = [
